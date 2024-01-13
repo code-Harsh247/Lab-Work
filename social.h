@@ -1,13 +1,15 @@
 #include <stdlib.h>
 
 #define limit 1000
+#define typeIndividual 1
+#define typeBusiness 2
+#define typeGroup 3
+#define typeOrganisation 4
 
-//GLOBAL VARIABLES
-int individual_count=0;
-int biz_count=0;
-int grp_count=0;
-int org_count=0;
-
+struct individual_;
+struct groups_;
+struct business_;
+struct organisation_;
 
 //STRUCTURE DEFINATIONS
 typedef struct Date{
@@ -20,8 +22,7 @@ typedef struct basic_{
     int id;
     char *name;
     date creationDate;
-    char *content;
-    int links_id[4][limit];
+    char *content[limit];
 }basic;
 
 typedef struct coordinate{
@@ -29,28 +30,42 @@ typedef struct coordinate{
     float y;
 }coords;
 
-typedef struct individual_{
-    basic ind;
-    date birthday;
-    
-}individual;
-
-typedef struct groups_{
-    basic grps;
-
-}group;
-
 typedef struct business_{
     basic biz;
     coords location;
-    
+    int ownerCount;
+    int customerCount;
+    struct individual_ *customers[limit];
+    struct individual_ *owners[limit];
+    struct group_ *memberOf[limit];
 }business;
+
+typedef struct groups_{
+    basic grps;
+    int indMemberCount;
+    int bizMemberCount;
+    struct individual_ *members[limit];
+    struct business_ *bizMembers[limit];
+
+}group;
 
 typedef struct organisation_{
     basic org;
     coords location;
+    int memberCount;
+    struct individual_ *members[limit];
     
 }organisation;
+
+typedef struct individual_{
+    basic ind;
+    date birthday;
+    group *linkedGrps[limit];
+    business *ownerOf[limit];
+    business *customerOf[limit];
+    organisation *linkedOrg[limit];
+
+}individual;
 
 //STRUCTURE ARRAYS
 individual *individual_list[limit];
