@@ -3,11 +3,6 @@
 #include <math.h>
 #include <time.h>
 #include <string.h>
-#include "social.h"#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <time.h>
-#include <string.h>
 #include <stdbool.h>
 #include "social.h"
 
@@ -24,7 +19,7 @@ void displayOptions(int option)
     if (option == 2)
         printf("\n 1. Individual \n 2. Business \n 3. Group \n 4. Organisation \n ");
     if (option == 1)
-        printf("\n 1. Create Profile \n 2. Delete Profile 3. \n Search for a Profile \n");
+        printf("\n 1. Create Profile \n 2. Delete Profile \n 3. Search for a Profile \n 4. List profiles \n");
     for (int i = 0; i < 20; i++)
         printf("-");
     printf("\n");
@@ -259,10 +254,12 @@ void displayMultipleBusinesses(int resultCount, int *resultIds)
     printf("Multiple businesses under the same name were found:\n");
     printf("Choose the correct one based on their details: \n");
 
+    business *currentBusiness;
+
     for (int j = 0; j < resultCount; j++)
     {
         int businessId = resultIds[j];
-        business *currentBusiness = getBizById(businessId);
+        currentBusiness = getBizById(businessId);
 
         for (int k = 0; k <= 20; k++)
             printf("--");
@@ -279,8 +276,80 @@ void displayMultipleBusinesses(int resultCount, int *resultIds)
         {
             printf("   %s\n", currentBusiness->owners[k]->ind.name);
         }
-        free(currentBusiness->biz.name);
+        for (int k = 0; k <= 20; k++)
+            printf("--");
+        
     }
+    free(currentBusiness->biz.name);
+}
+
+void displayMultipleGroups(int resultCount, int *resultIds) {
+    printf("Multiple groups under the same name were found:\n");
+    printf("Choose the correct one based on their details: \n");
+
+    group *currentGroup;  // Declare outside the loop
+
+    for (int j = 0; j < resultCount; j++) {
+        int groupId = resultIds[j];
+        currentGroup = getGrpById(groupId);
+
+        for (int k = 0; k <= 20; k++)
+            printf("--");
+        printf("\n");
+        printf("%d. Group Details:\n", j + 1);
+        printf("Name: %s\n", currentGroup->grps.name);
+        printf("ID: %d\n", currentGroup->grps.id);
+        printf("Creation Date: %d/%d/%d\n", currentGroup->grps.creationDate.day,
+               currentGroup->grps.creationDate.month, currentGroup->grps.creationDate.year);
+
+        printf("Individual Members:\n");
+        for (int k = 0; k < currentGroup->indMemberCount; k++) {
+            printf("   %s\n", currentGroup->members[k]->ind.name);
+        }
+
+        printf("Business Members:\n");
+        for (int k = 0; k < currentGroup->bizMemberCount; k++) {
+            printf("   %s\n", currentGroup->bizMembers[k]->biz.name);
+        }
+        for (int k = 0; k <= 20; k++)
+            printf("--");
+    }
+
+    // Free memory for the last group name outside the loop
+    free(currentGroup->grps.name);
+}
+
+void displayMultipleOrganisations(int resultCount, int *resultIds) {
+    printf("Multiple organisations under the same name were found:\n");
+    printf("Choose the correct one based on their details: \n");
+
+    organisation *currentOrganisation;  // Declare outside the loop
+
+    for (int j = 0; j < resultCount; j++) {
+        int orgId = resultIds[j];
+        currentOrganisation = getOrgById(orgId);
+
+        for (int k = 0; k <= 20; k++)
+            printf("--");
+        printf("\n");
+        printf("%d. Organisation Details:\n", j + 1);
+        printf("Name: %s\n", currentOrganisation->org.name);
+        printf("ID: %d\n", currentOrganisation->org.id);
+        printf("Creation Date: %d/%d/%d\n", currentOrganisation->org.creationDate.day,
+               currentOrganisation->org.creationDate.month, currentOrganisation->org.creationDate.year);
+
+        printf("Location: (%.2f, %.2f)\n", currentOrganisation->location.x, currentOrganisation->location.y);
+
+        printf("Members:\n");
+        for (int k = 0; k < currentOrganisation->memberCount; k++) {
+            printf("   %s\n", currentOrganisation->members[k]->ind.name);
+        }
+        for (int k = 0; k <= 20; k++)
+            printf("--");
+    }
+
+    // Free memory for the last organisation name outside the loop
+    free(currentOrganisation->org.name);
 }
 
 void addIndividual(basic *basicProfileDetails)
@@ -838,6 +907,82 @@ void createProfile(int type)
     return;
 }
 
+void deleteIndividual(int serialNum){
+    if (individual_list[serialNum] != NULL) {
+        free(individual_list[serialNum]);
+        individual_list[serialNum] = NULL;
+        printf("Individual profile at serial number %d deleted successfully.\n", serialNum);
+    } else {
+        printf("No individual profile found at serial number %d.\n", serialNum);
+    }
+}
+
+void deleteBusiness(int serialNum){
+    if (biz_list[serialNum] != NULL) {
+        free(biz_list[serialNum]);
+        biz_list[serialNum] = NULL;
+        printf("Business profile at serial number %d deleted successfully.\n", serialNum);
+    } else {
+        printf("No business profile found at serial number %d.\n", serialNum);
+    }
+}
+
+void deleteGroup(int serialNum){
+    if (grp_list[serialNum] != NULL) {
+        free(grp_list[serialNum]);
+        grp_list[serialNum] = NULL;
+        printf("Group profile at serial number %d deleted successfully.\n", serialNum);
+    } else {
+        printf("No group profile found at serial number %d.\n", serialNum);
+    }
+}
+
+void deleteOrganisation(int serialNum){
+    if (org_list[serialNum] != NULL) {
+        free(org_list[serialNum]);
+        org_list[serialNum] = NULL;
+        printf("Organization profile at serial number %d deleted successfully.\n", serialNum);
+    } else {
+        printf("No organization profile found at serial number %d.\n", serialNum);
+    }
+}
+
+
+void deleteProfileById(int id, int type){
+    int serialNum = removeFirstDigit(id);
+    switch (type){
+        case 1:{
+            deleteIndividual(serialNum);
+            break;
+        }
+        case 2:{
+            deleteBusiness(serialNum);
+            break;
+        }
+        case 3:{
+            deleteGroup(serialNum);
+            break;
+        }
+        case 4:{
+            deleteOrganisation(serialNum);
+            break;
+        }
+    }
+}
+
+void displayMultipleProfiles(int resultCount, int *resultIds, int choice){
+    switch (choice){
+        case 1: displayMultipleIndividuals(resultCount, resultIds);
+        break;
+        case 2: displayMultipleBusinesses(resultCount, resultIds);
+        break;
+        case 3: displayMultipleGroups(resultCount, resultIds);
+        break;
+        case 4: displayMultipleOrganisations(resultCount, resultIds);
+        break;
+    }
+}
+
 void deleteProfile()
 {
     printf("Which type of profile would you like to delete?\n");
@@ -883,13 +1028,13 @@ void deleteProfile()
     else if (resultCount == 1)
     {
         // Delete the single matching profile
-        deleteProfileById(resultIds[0]);
+        deleteProfileById(resultIds[0],choice);
         printf("Profile deleted successfully.\n");
     }
     else
     {
         // Display multiple matching profiles and let the user choose
-        displayMultipleProfiles(resultCount, resultIds);
+        displayMultipleProfiles(resultCount, resultIds, choice);
         int deleteChoice;
         printf("Enter the number corresponding to the profile you want to delete:\n");
         scanf("%d", &deleteChoice);
@@ -897,7 +1042,7 @@ void deleteProfile()
         if (deleteChoice >= 1 && deleteChoice <= resultCount)
         {
             // Delete the selected profile
-            deleteProfileById(resultIds[deleteChoice - 1]);
+            deleteProfileById(resultIds[deleteChoice - 1], choice);
             printf("Profile deleted successfully.\n");
         }
         else
@@ -909,6 +1054,69 @@ void deleteProfile()
     free(resultIds);
 }
 
+void listIndividuals() {
+    printf("List of Individuals:\n");
+    for (int i = 0; i < individual_count; i++) {
+        printf("ID: %d, Name: %s\n", individual_list[i]->ind.id, individual_list[i]->ind.name);
+    }
+}
+
+void listGroups() {
+    printf("List of Groups:\n");
+    for (int i = 0; i < grp_count; i++) {
+        printf("ID: %d, Name: %s\n", grp_list[i]->grps.id, grp_list[i]->grps.name);
+    }
+}
+
+void listOrganisations() {
+    printf("List of Organizations:\n");
+    for (int i = 0; i < org_count; i++) {
+        printf("ID: %d, Name: %s\n", org_list[i]->org.id, org_list[i]->org.name);
+    }
+}
+
+void listBusinesses() {
+    printf("List of Businesses:\n");
+    for (int i = 0; i < biz_count; i++) {
+        printf("ID: %d, Name: %s, ", biz_list[i]->biz.id, biz_list[i]->biz.name);
+        printf("Owners: ");
+        for(int j=0;j<biz_list[i]->ownerCount;j++){
+            if(biz_list[i]->owners[j] == NULL){
+                printf("none / Owner-profile might be deleted");
+            }
+            printf("%s, ",biz_list[i]->owners[j]->ind.name);
+        }
+    }
+}
+
+
+void listProfiles(){
+    printf("List of which type of profiles would you like to see?\n");
+    displayOptions(2);
+    int type;
+    scanf("%d", &type);
+    switch(type){
+        case 1:{
+            listIndividuals();
+            break;
+        }
+        case 2:{
+            listBusinesses();
+            break;
+        }
+        case 3:{
+            listGroups();
+            break;
+        }
+        case 4:{
+            listOrganisations();
+            break;
+        }
+        default:{
+            printf("Invalid Input.\n");
+        }
+    }
+}
 
 void Create()
 {
@@ -923,297 +1131,35 @@ void Create()
 
 int main()
 {
-    // while(1){
+    int choice;
+    while(true){
     printf("What would you like to do?\n");
     displayOptions(1);
-    Create();
-
-    // }
-
-    // printf("test name : %s", individual_list[0]->ind.name);
-}
-
-
-void displayOptions(){
-    for(int i=0;i<20;i++) printf("-");
-    printf("\n 1. Individual \n 2. Business \n 3. Group \n 4. Organisation \n ");
-    for(int i=0;i<20;i++) printf("-");
-    printf("\n");
-
-}
-
-int countDigits(int number){
-     int count = 0;
-
-    // Handle the case when the number is 0
-    if (number == 0) {
-        return 1; // 0 has one digit
-    }
-
-    // Count digits using a loop
-    while (number != 0) {
-        number = number / 10;
-        count++;
-    }
-
-    return count;
-}
-
-int createID(int type){
-    int output_id, digit_count=0;
-    switch(type){
-        case 1: 
-            digit_count = countDigits(individual_count);
-            output_id = (int)pow(10, digit_count) + individual_count;
-            individual_count++;
-            break;
-        
-        case 2: 
-            digit_count = countDigits(biz_count);
-            output_id = 2*(int)pow(10, digit_count) + biz_count;
-            biz_count++;
-            break;
-        
-        case 3: 
-            digit_count = countDigits(grp_count);
-            output_id = 3*(int)pow(10, digit_count) + grp_count;
-            grp_count++;
-            break;
-        
-        case 4: 
-            digit_count = countDigits(org_count);
-            output_id = 4*(int)pow(10, digit_count) + org_count;
-            org_count++;
-            break;
-        
-        default: return -1;
-    }
-
-    return output_id;
-}
-
-int searchEntity(int type, char *name){}
-
-date getCurrentDate() {
-    time_t currentDate;
-    struct tm *localDate;
-    date today;
-
-    // Get the current date
-    time(&currentDate);
-
-    // Convert the current date to the local date
-    localDate = localtime(&currentDate);
-
-    // Populate the Date struct
-    today.day = localDate->tm_mday;
-    today.month = localDate->tm_mon + 1; // tm_mon is 0-indexed, so add 1
-    today.year = localDate->tm_year + 1900; // tm_year is years since 1900
-
-    return today;
-}
-
-void createProfile(int type){
-    printf("\n----- Enter the required details -----\n ");
-
-    basic *basicProfileDetails;
-    basicProfileDetails = (basic*)malloc(sizeof(basic));
-
-    char name[limit];
-
-    //Entering Name
-    printf("Enter Name : ");
-    scanf("%s", name);
-    basicProfileDetails->name = strdup(name);
-            
-    if (basicProfileDetails->name == NULL) {
-        fprintf(stderr, "Memory allocation failed. No name input detected\n");
-        free(basicProfileDetails);
-        return;
-    }
-
-    //Storing date
-    basicProfileDetails->creationDate = getCurrentDate();
-
-    //Storing content
-    char content[limit];
-    printf("Enter content \n");
-    scanf("%s", content);
-    basicProfileDetails->content = strdup(content);
-
-
-    switch(type){
-        case 1:{ //individual
-            individual *individual_profile;
-            individual_profile = (individual *)malloc(sizeof(individual));
-
-            //Storing it in 'individuals' list
-            individual_list[individual_count] = individual_profile;
-
-            //Creating and assigning an unique ID
-            individual_profile->ind.id = createID(type);
-
-            //Storing name
-            individual_profile->ind.name = basicProfileDetails->name;
-
-            //Storing Creation Date
-            individual_profile->ind.creationDate = basicProfileDetails->creationDate;
-
-            //Storing content
-            individual_profile->ind.content = basicProfileDetails->content;
-
-            //Storing birthday
-            while(1){
-                char choice;
-                printf("\nWould you like to add your birthdate to your profile? \n Enter 'y' for yes and 'n' for no\n");
-                scanf(" %c",&choice);
-                if(choice == 'y' || choice == 'Y'){
-                    date birthDay;
-                    int day,month,year;
-                    printf("Enter day : \n");
-                    scanf("%d", &day);
-                    printf("Enter month: \n");
-                    scanf("%d", &month);
-                    printf("Enter year: \n");
-                    scanf("%d", &year);
-                    int currYear = basicProfileDetails->creationDate.year;
-                    if(day>31 || day< 1 || month<1 || month>12 || year> currYear || year < 1 ){
-                        printf("Enter a valid birthdate! \n");
-                        continue;
-                    }
-                    else {
-                        birthDay.day = day;
-                        birthDay.month = month;
-                        birthDay.year = year;
-
-                        individual_profile->birthday = birthDay;
-                        break;
-                    }
-                    
-
-                }
-                else if(choice == 'n' || choice == 'N'){
-                    break;
-                }
-                else {
-                    printf("\nInvalid input choice\n");
-                    continue;
-                }
-            }
-
-
+    scanf("%d", &choice);
+    switch(choice){
+        case 1:{
+            Create();
             break;
         }
-        case 2:{ //business
-            business *biz_profile;
-            biz_profile = (business *)malloc(sizeof(business));
-
-            biz_list[biz_count] = biz_profile;
-
-            biz_profile->biz.id = createID(type);
-
-            biz_profile->biz.name = basicProfileDetails->name;
-
-            biz_profile->biz.creationDate = basicProfileDetails->creationDate;
-
-            biz_profile->biz.content = basicProfileDetails->content;
-
-            printf("\nEnter location coordinates of the business\n");
-            printf("Enter x coordinates: ");
-            float x,y;
-            scanf("%f", &x);
-            printf("Enter y coordinates: ");
-            scanf("%f", &y);
-
-            biz_profile->location.x = x;
-            biz_profile->location.y = y;
-
-            
-            printf("How many owners does this business have?");
-            int ownerCount;
-            scanf("%d", ownerCount);
-            for(int i=1;i<=ownerCount;i++){
-                char ownerName[limit];
-                printf("Enter the name of the owner %d :\n", i);
-                scanf("%s", ownerName);
-                //------------------------------------searchEntity(1, ownerName);
-                
-            }
-            
-
-            
-
-            
-
+        case 2:{
+            deleteProfile();
             break;
         }
         case 3:{
-            group *grp_profile;
-            grp_profile = (group *)malloc(sizeof(group));
-
-            grp_list[grp_count] = grp_profile;
-
-            grp_profile->grps.id= createID(type);
-
-            grp_profile->grps.name = basicProfileDetails->name;
-
-            grp_profile->grps.creationDate = basicProfileDetails->creationDate;
-
-            grp_profile->grps.content = basicProfileDetails->content;
-            
+            //Search for a profile
             break;
         }
-        case 4:{
-            organisation *org_profile;
-            org_profile = (organisation *)malloc(sizeof(organisation));
-
-            org_list[org_count] = org_profile;
-
-            org_profile->org.id = createID(type);
-
-            org_profile->org.name = basicProfileDetails->name;
-
-            org_profile->org.creationDate = basicProfileDetails->creationDate;
-
-            printf("\nEnter location coordinates of the business\n");
-            printf("Enter x coordinates: ");
-            float x,y;
-            scanf("%f", &x);
-            printf("Enter y coordinates: ");
-            scanf("%f", &y);
-
-            org_profile->location.x = x;
-            org_profile->location.y = y;
-
-            org_profile->org.content = basicProfileDetails->content;
-
+        case 4: {
+            listProfiles();
             break;
-        }
+        }   
         default: {
-            printf("Invalid input!");
-            return;
+            printf("Invalid input. Please provide an input from the given options.");
+            continue;
         }
     }
-    return;
-}
-
-int main(){
-    int type;
-    printf("What type of profile would you like to create ? : ");
-    printf("\n(Enter the respective code)\n");
-    displayOptions();
     
-    scanf("%d", &type);
-    createProfile(type);
-
+    }
 
     // printf("test name : %s", individual_list[0]->ind.name);
-
-
-
-    
-    
-
-
 }
-
