@@ -72,3 +72,4 @@ individual *individual_list[limit];
 business *biz_list[limit];
 group *grp_list[limit];
 organisation *org_list[limit];
+
