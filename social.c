@@ -781,9 +781,11 @@ void storeBizMembers(group *grp_profile, int bizMemberCount)
         }
         else if (resultCount == 1)
         {
+            business *biz = getBizById(resultIds[0]);
             printf("Business Profile found in the database. Added %s as member \n", bizName);
             // Search by ID, return pointer
-            grp_profile->bizMembers[i] = getBizById(resultIds[0]);
+            grp_profile->bizMembers[i] = biz;
+            grp_profile->bizMemberCount++;
         }
         else
         {
@@ -796,7 +798,9 @@ void storeBizMembers(group *grp_profile, int bizMemberCount)
             {
                 int id;
                 scanf("%d", &id);
-                grp_profile->bizMembers[i] = getBizById(id);
+                business *biz = getBizById(id);
+                grp_profile->bizMembers[i] = biz;
+                grp_profile->bizMemberCount++;
                 i++;
             }
             printf("Member(s) added!");
@@ -828,6 +832,10 @@ void addGroup(basic *basicProfileDetails)
 
     // Storing Creation Date
     group_profile->grps.creationDate = basicProfileDetails->creationDate;
+
+    //Initialising
+    group_profile->bizMemberCount = 0;
+    group_profile->indMemberCount = 0;
 
     // Storing individual members
     printf("How many members does this group have?\n");
@@ -866,6 +874,9 @@ void addOrganisation(basic *basicProfileDetails)
 
     // Storing name
     orgProfile->org.name = strdup(basicProfileDetails->name);
+
+    //Initialising
+    orgProfile->memberCount = 0;
 
     // Storing Creation Date
     orgProfile->org.creationDate = basicProfileDetails->creationDate;
@@ -1833,7 +1844,7 @@ void printLinksForInd() {
 
 void printLinksForBiz() {
     int id;
-    listProfiles(); // Assuming this function lists all profiles
+    listBusinesses(); // Assuming this function lists all profiles
     printf("Enter ID of the business for which you'd like to print links:\n");
     scanf("%d", &id);
 
@@ -1875,6 +1886,72 @@ void printLinksForBiz() {
     }
 }
 
+void printLinksForGrp() {
+    int id;
+    listGroups(); // Assuming this function lists all profiles
+    printf("Enter ID of the group for which you'd like to print links:\n");
+    scanf("%d", &id);
+
+    group *grp = NULL;
+
+    // Search for the group with the specified ID
+    for (int i = 0; i < limit; i++) {
+        if (grp_list[i] != NULL && grp_list[i]->grps.id == id) {
+            grp = grp_list[i];
+            break;
+        }
+    }
+
+    if (grp != NULL) {
+        displaySeparatorWithType(typeIndividual);
+        printf("Members of Group ID: %d, Name: %s\n", grp->grps.id, grp->grps.name);
+
+        // Print links to individual members
+        for (int i = 0; i < grp->indMemberCount; i++) {
+            printf("- Individual ID: %d, Name: %s\n", grp->members[i]->ind.id, grp->members[i]->ind.name);
+        }
+
+        displaySeparatorWithType(typeBusiness);
+        printf("Member businesses of Group ID: %d, Name: %s\n", grp->grps.id, grp->grps.name);
+
+        // Print links to businesses
+        for (int i = 0; i < grp->bizMemberCount; i++) {
+            printf("- Business ID: %d, Name: %s\n", grp->bizMembers[i]->biz.id, grp->bizMembers[i]->biz.name);
+        }
+    } else {
+        printf("Group not found.\n");
+    }
+}
+
+void printLinksForOrg() {
+    int id;
+    listOrganisations(); // Assuming this function lists all profiles
+    printf("Enter ID of the organization for which you'd like to print links:\n");
+    scanf("%d", &id);
+
+    organisation *org = NULL;
+
+    // Search for the organization with the specified ID
+    for (int i = 0; i < limit; i++) {
+        if (org_list[i] != NULL && org_list[i]->org.id == id) {
+            org = org_list[i];
+            break;
+        }
+    }
+
+    if (org != NULL) {
+        displaySeparatorWithType(typeIndividual);
+        printf("Members of Organization ID: %d, Name: %s\n", org->org.id, org->org.name);
+
+        // Print links to individual members
+        for (int i = 0; i < org->memberCount; i++) {
+            printf("- Individual ID: %d, Name: %s\n", org->members[i]->ind.id, org->members[i]->ind.name);
+        }
+    } else {
+        printf("Organization not found.\n");
+    }
+}
+
 void printLinksForType(int type){
     switch (type) {
     case typeIndividual:
@@ -1884,7 +1961,7 @@ void printLinksForType(int type){
         printLinksForBiz();
         break;
     case typeGroup:
-        // printLinksForGrp();
+        printLinksForGrp();
         break;
     case typeOrganisation:
         // printLinksForOrg();
