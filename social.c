@@ -14,14 +14,14 @@ int org_count = 0;
 
 void displayOptions(int option)
 {
-    for (int i = 0; i < 20; i++)
-        printf("-");
+
+    displaySeparatorWithType(limit);
     if (option == 2)
         printf("\n 1. Individual \n 2. Business \n 3. Group \n 4. Organisation \n ");
     if (option == 1)
-        printf("\n 1. Create Profile \n 2. Delete Profile \n 3. Search for a Profile \n 4. List profiles \n");
-    for (int i = 0; i < 20; i++)
-        printf("-");
+        printf("\n 1. Create Profile \n 2. Delete Profile \n 3. Search for a Profile \n 4. Print One-Hops \n 5. Create and Post Content\n 6. Search for content \n 7. Print Linked Individual");
+
+    displaySeparatorWithType(limit);
     printf("\n");
 }
 
@@ -278,18 +278,19 @@ void displayMultipleBusinesses(int resultCount, int *resultIds)
         }
         for (int k = 0; k <= 20; k++)
             printf("--");
-        
     }
     free(currentBusiness->biz.name);
 }
 
-void displayMultipleGroups(int resultCount, int *resultIds) {
+void displayMultipleGroups(int resultCount, int *resultIds)
+{
     printf("Multiple groups under the same name were found:\n");
     printf("Choose the correct one based on their details: \n");
 
-    group *currentGroup;  // Declare outside the loop
+    group *currentGroup; // Declare outside the loop
 
-    for (int j = 0; j < resultCount; j++) {
+    for (int j = 0; j < resultCount; j++)
+    {
         int groupId = resultIds[j];
         currentGroup = getGrpById(groupId);
 
@@ -303,12 +304,14 @@ void displayMultipleGroups(int resultCount, int *resultIds) {
                currentGroup->grps.creationDate.month, currentGroup->grps.creationDate.year);
 
         printf("Individual Members:\n");
-        for (int k = 0; k < currentGroup->indMemberCount; k++) {
+        for (int k = 0; k < currentGroup->indMemberCount; k++)
+        {
             printf("   %s\n", currentGroup->members[k]->ind.name);
         }
 
         printf("Business Members:\n");
-        for (int k = 0; k < currentGroup->bizMemberCount; k++) {
+        for (int k = 0; k < currentGroup->bizMemberCount; k++)
+        {
             printf("   %s\n", currentGroup->bizMembers[k]->biz.name);
         }
         for (int k = 0; k <= 20; k++)
@@ -319,13 +322,15 @@ void displayMultipleGroups(int resultCount, int *resultIds) {
     free(currentGroup->grps.name);
 }
 
-void displayMultipleOrganisations(int resultCount, int *resultIds) {
+void displayMultipleOrganisations(int resultCount, int *resultIds)
+{
     printf("Multiple organisations under the same name were found:\n");
     printf("Choose the correct one based on their details: \n");
 
-    organisation *currentOrganisation;  // Declare outside the loop
+    organisation *currentOrganisation; // Declare outside the loop
 
-    for (int j = 0; j < resultCount; j++) {
+    for (int j = 0; j < resultCount; j++)
+    {
         int orgId = resultIds[j];
         currentOrganisation = getOrgById(orgId);
 
@@ -341,7 +346,8 @@ void displayMultipleOrganisations(int resultCount, int *resultIds) {
         printf("Location: (%.2f, %.2f)\n", currentOrganisation->location.x, currentOrganisation->location.y);
 
         printf("Members:\n");
-        for (int k = 0; k < currentOrganisation->memberCount; k++) {
+        for (int k = 0; k < currentOrganisation->memberCount; k++)
+        {
             printf("   %s\n", currentOrganisation->members[k]->ind.name);
         }
         for (int k = 0; k <= 20; k++)
@@ -371,6 +377,21 @@ void addIndividual(basic *basicProfileDetails)
 
     // Storing name
     individual_profile->ind.name = basicProfileDetails->name;
+
+    // Initialising Content Count
+    individual_profile->ind.contentCount = 0;
+
+    // Initialising Linked Group Count
+    individual_profile->linkedGrpsCount = 0;
+
+    // Initialising Linked Organisations Count
+    individual_profile->linkedOrgsCount = 0;
+
+    // Initialising Count of the businesses this individual owns
+    individual_profile->ownerOfCount = 0;
+
+    // Initialising Count of the businesses this individual is a customer of
+    individual_profile->customerOfCount = 0;
 
     // Storing Creation Date
     individual_profile->ind.creationDate = basicProfileDetails->creationDate;
@@ -450,9 +471,12 @@ void storeCustomers(business *biz_profile, int customerCount)
         }
         else if (resultCount == 1)
         {
+            individual *person = getIndividualById(resultIds[0]);
             printf("Customer profile found in the database. Added %s as a customer.\n", customerName);
             // Search by ID, return pointer
-            biz_profile->customers[i] = getIndividualById(resultIds[0]);
+            biz_profile->customers[i] = person;
+            person->customerOf[person->customerOfCount] = biz_profile;
+            person->customerOfCount++;
         }
         else
         {
@@ -488,8 +512,10 @@ void storeCustomers(business *biz_profile, int customerCount)
                     else
                         continue;
                 }
-
-                biz_profile->customers[i] = getIndividualById(id);
+                individual *person = getIndividualById(id);
+                biz_profile->customers[i] = person;
+                person->customerOf[person->customerOfCount] = biz_profile;
+                person->customerOfCount++;
                 i++;
             }
             printf("Customers added!\n");
@@ -517,9 +543,13 @@ void storeOwners(business *biz_profile, int ownerCount)
         }
         else if (resultCount == 1)
         {
+            individual *person = getIndividualById(resultIds[0]);
             printf("Individual Profile found in the database. Added %s as owner \n", ownerName);
             // Search by ID, return pointer
             biz_profile->owners[i] = getIndividualById(resultIds[0]);
+            person->ownerOf[person->ownerOfCount] = biz_profile;
+            person->ownerOfCount++;
+            ownerCount++;
         }
         else
         {
@@ -554,8 +584,10 @@ void storeOwners(business *biz_profile, int ownerCount)
                     else
                         break;
                 }
-
-                biz_profile->owners[i] = getIndividualById(id);
+                individual *person = getIndividualById(id);
+                biz_profile->owners[i] = person;
+                person->ownerOf[person->ownerOfCount] =  biz_profile;
+                person->ownerOfCount++;
                 i++;
             }
             printf("Owners added!");
@@ -636,7 +668,10 @@ void storeGroupMembers(group *grp_profile, int memberCount)
         {
             printf("Individual Profile found in the database. Added %s as owner \n", memberName);
             // Search by ID, return pointer
-            grp_profile->members[i] = getIndividualById(resultIds[0]);
+            individual *member = getIndividualById(resultIds[0]);
+            grp_profile->members[i] = member;
+            member->linkedGrps[member->linkedGrpsCount] = grp_profile;
+            member->linkedGrpsCount++;
         }
         else
         {
@@ -649,7 +684,10 @@ void storeGroupMembers(group *grp_profile, int memberCount)
             {
                 int id;
                 scanf("%d", &id);
-                grp_profile->members[i] = getIndividualById(id);
+                individual *member = getIndividualById(id);
+                grp_profile->members[i] = member;
+                member->linkedGrps[member->linkedGrpsCount] = grp_profile;
+                member->linkedGrpsCount++;
                 i++;
             }
             printf("Member(s) added!");
@@ -676,9 +714,11 @@ void storeOrgMembers(organisation *org_profile, int memberCount)
         }
         else if (resultCount == 1)
         {
+            individual *member = getIndividualById(resultIds[0]);
             printf("Individual Profile found in the database. Added %s as a member.\n", memberName);
             // Search by ID, return pointer
             org_profile->members[i] = getIndividualById(resultIds[0]);
+            member->linkedOrgsCount++;
         }
         else
         {
@@ -711,8 +751,10 @@ void storeOrgMembers(organisation *org_profile, int memberCount)
                         printf("Invalid ID entered. Please try again.\n");
                     }
                 }
-
+                individual *member = getIndividualById(id);
                 org_profile->members[i] = getIndividualById(id);
+                member->linkedOrgs[member->linkedOrgsCount] = org_profile;
+                member->linkedOrgsCount++;
                 i++;
             }
             printf("Members added!\n");
@@ -802,7 +844,7 @@ void addGroup(basic *basicProfileDetails)
 
     storeBizMembers(group_profile, bizMemberCount);
 
-    printf("Business profile added!\n");
+    printf("Group profile added!\n");
 }
 
 void addOrganisation(basic *basicProfileDetails)
@@ -907,78 +949,105 @@ void createProfile(int type)
     return;
 }
 
-void deleteIndividual(int serialNum){
-    if (individual_list[serialNum] != NULL) {
+void deleteIndividual(int serialNum)
+{
+    if (individual_list[serialNum] != NULL)
+    {
         free(individual_list[serialNum]);
         individual_list[serialNum] = NULL;
         printf("Individual profile at serial number %d deleted successfully.\n", serialNum);
-    } else {
+    }
+    else
+    {
         printf("No individual profile found at serial number %d.\n", serialNum);
     }
 }
 
-void deleteBusiness(int serialNum){
-    if (biz_list[serialNum] != NULL) {
+void deleteBusiness(int serialNum)
+{
+    if (biz_list[serialNum] != NULL)
+    {
         free(biz_list[serialNum]);
         biz_list[serialNum] = NULL;
         printf("Business profile at serial number %d deleted successfully.\n", serialNum);
-    } else {
+    }
+    else
+    {
         printf("No business profile found at serial number %d.\n", serialNum);
     }
 }
 
-void deleteGroup(int serialNum){
-    if (grp_list[serialNum] != NULL) {
+void deleteGroup(int serialNum)
+{
+    if (grp_list[serialNum] != NULL)
+    {
         free(grp_list[serialNum]);
         grp_list[serialNum] = NULL;
         printf("Group profile at serial number %d deleted successfully.\n", serialNum);
-    } else {
+    }
+    else
+    {
         printf("No group profile found at serial number %d.\n", serialNum);
     }
 }
 
-void deleteOrganisation(int serialNum){
-    if (org_list[serialNum] != NULL) {
+void deleteOrganisation(int serialNum)
+{
+    if (org_list[serialNum] != NULL)
+    {
         free(org_list[serialNum]);
         org_list[serialNum] = NULL;
         printf("Organization profile at serial number %d deleted successfully.\n", serialNum);
-    } else {
+    }
+    else
+    {
         printf("No organization profile found at serial number %d.\n", serialNum);
     }
 }
 
-
-void deleteProfileById(int id, int type){
+void deleteProfileById(int id, int type)
+{
     int serialNum = removeFirstDigit(id);
-    switch (type){
-        case 1:{
-            deleteIndividual(serialNum);
-            break;
-        }
-        case 2:{
-            deleteBusiness(serialNum);
-            break;
-        }
-        case 3:{
-            deleteGroup(serialNum);
-            break;
-        }
-        case 4:{
-            deleteOrganisation(serialNum);
-            break;
-        }
+    switch (type)
+    {
+    case 1:
+    {
+        deleteIndividual(serialNum);
+        break;
+    }
+    case 2:
+    {
+        deleteBusiness(serialNum);
+        break;
+    }
+    case 3:
+    {
+        deleteGroup(serialNum);
+        break;
+    }
+    case 4:
+    {
+        deleteOrganisation(serialNum);
+        break;
+    }
     }
 }
 
-void displayMultipleProfiles(int resultCount, int *resultIds, int choice){
-    switch (choice){
-        case 1: displayMultipleIndividuals(resultCount, resultIds);
+void displayMultipleProfiles(int resultCount, int *resultIds, int choice)
+{
+    switch (choice)
+    {
+    case 1:
+        displayMultipleIndividuals(resultCount, resultIds);
         break;
-        case 2: displayMultipleBusinesses(resultCount, resultIds);
+    case 2:
+        displayMultipleBusinesses(resultCount, resultIds);
         break;
-        case 3: displayMultipleGroups(resultCount, resultIds);
+    case 3:
+        displayMultipleGroups(resultCount, resultIds);
         break;
-        case 4: displayMultipleOrganisations(resultCount, resultIds);
+    case 4:
+        displayMultipleOrganisations(resultCount, resultIds);
         break;
     }
 }
@@ -1028,7 +1097,7 @@ void deleteProfile()
     else if (resultCount == 1)
     {
         // Delete the single matching profile
-        deleteProfileById(resultIds[0],choice);
+        deleteProfileById(resultIds[0], choice);
         printf("Profile deleted successfully.\n");
     }
     else
@@ -1054,69 +1123,787 @@ void deleteProfile()
     free(resultIds);
 }
 
-void listIndividuals() {
-    printf("List of Individuals:\n");
-    for (int i = 0; i < individual_count; i++) {
+void listIndividuals()
+{
+    displaySeparatorWithType(typeIndividual);
+    for (int i = 0; i < individual_count; i++)
+    {
         printf("ID: %d, Name: %s\n", individual_list[i]->ind.id, individual_list[i]->ind.name);
     }
+    displaySeparatorWithType(limit);
 }
 
-void listGroups() {
-    printf("List of Groups:\n");
-    for (int i = 0; i < grp_count; i++) {
+void listGroups()
+{
+    displaySeparatorWithType(typeGroup);
+    for (int i = 0; i < grp_count; i++)
+    {
         printf("ID: %d, Name: %s\n", grp_list[i]->grps.id, grp_list[i]->grps.name);
     }
+    displaySeparatorWithType(limit);
 }
 
-void listOrganisations() {
-    printf("List of Organizations:\n");
-    for (int i = 0; i < org_count; i++) {
+void listOrganisations()
+{
+    displaySeparatorWithType(typeOrganisation);
+    for (int i = 0; i < org_count; i++)
+    {
         printf("ID: %d, Name: %s\n", org_list[i]->org.id, org_list[i]->org.name);
     }
+    displaySeparatorWithType(limit);
 }
 
-void listBusinesses() {
+void listBusinesses()
+{
     printf("List of Businesses:\n");
-    for (int i = 0; i < biz_count; i++) {
+    for (int i = 0; i < biz_count; i++)
+    {
         printf("ID: %d, Name: %s, ", biz_list[i]->biz.id, biz_list[i]->biz.name);
         printf("Owners: ");
-        for(int j=0;j<biz_list[i]->ownerCount;j++){
-            if(biz_list[i]->owners[j] == NULL){
+        for (int j = 0; j < biz_list[i]->ownerCount; j++)
+        {
+            if (biz_list[i]->owners[j] == NULL)
+            {
                 printf("none / Owner-profile might be deleted");
             }
-            printf("%s, ",biz_list[i]->owners[j]->ind.name);
+            printf("%s, ", biz_list[i]->owners[j]->ind.name);
         }
     }
 }
 
+void displaySeparatorWithType(int profileType)
+{
+    const char *typeName;
 
-void listProfiles(){
+    switch (profileType)
+    {
+    case typeIndividual:
+        typeName = "INDIVIDUAL";
+        break;
+    case typeBusiness:
+        typeName = "BUSINESS";
+        break;
+    case typeGroup:
+        typeName = "GROUP";
+        break;
+    case typeOrganisation:
+        typeName = "ORGANISATION";
+        break;
+    default:
+        typeName = "";
+    }
+
+    int length = strlen(typeName);
+    int totalWidth = 40; // Adjust as needed
+    int remainingWidth = (totalWidth - length) / 2;
+
+    printf("\n");
+    for (int i = 0; i < remainingWidth; i++)
+    {
+        printf("*");
+    }
+    if (length != 0)
+    {
+        printf(" %s ", typeName);
+    }
+    else
+        printf("**");
+
+    for (int i = 0; i < remainingWidth; i++)
+    {
+        printf("*");
+    }
+    printf("\n");
+}
+
+void searchProfileByName(const char *name)
+{
+    printf("Search Results for \"%s\":\n", name);
+
+    // Search and display individuals
+    displaySeparatorWithType(typeIndividual);
+    for (int i = 0; i < individual_count; i++)
+    {
+        if (strcmp(individual_list[i]->ind.name, name) == 0)
+        {
+            printf("ID: %d, Name: %s\n", individual_list[i]->ind.id, individual_list[i]->ind.name);
+        }
+    }
+
+    // Search and display businesses
+    displaySeparatorWithType(typeBusiness);
+    for (int i = 0; i < biz_count; i++)
+    {
+        if (strcmp(biz_list[i]->biz.name, name) == 0)
+        {
+            printf("ID: %d, Name: %s\n", biz_list[i]->biz.id, biz_list[i]->biz.name);
+        }
+    }
+
+    // Search and display groups
+    displaySeparatorWithType(typeGroup);
+    for (int i = 0; i < grp_count; i++)
+    {
+        if (strcmp(grp_list[i]->grps.name, name) == 0)
+        {
+            printf("ID: %d, Name: %s\n", grp_list[i]->grps.id, grp_list[i]->grps.name);
+        }
+    }
+
+    // Search and display organisations
+    displaySeparatorWithType(typeOrganisation);
+    for (int i = 0; i < org_count; i++)
+    {
+        if (strcmp(org_list[i]->org.name, name) == 0)
+        {
+            printf("ID: %d, Name: %s\n", org_list[i]->org.id, org_list[i]->org.name);
+        }
+    }
+}
+
+void searchIndividualsByBirthday(const date birthday)
+{
+    printf("Search Results for Individuals with Birthday %d-%d-%d:\n",
+           birthday.day, birthday.month, birthday.year);
+
+    for (int i = 0; i < limit; i++)
+    {
+        if (individual_list[i] != NULL &&
+            individual_list[i]->birthday.day == birthday.day &&
+            individual_list[i]->birthday.month == birthday.month &&
+            individual_list[i]->birthday.year == birthday.year)
+        {
+            // Display information for the matched individual
+            printf("Individual ID: %d, Name: %s, Birthday: %d-%d-%d\n",
+                   individual_list[i]->ind.id,
+                   individual_list[i]->ind.name,
+                   individual_list[i]->birthday.day,
+                   individual_list[i]->birthday.month,
+                   individual_list[i]->birthday.year);
+        }
+    }
+}
+
+void search()
+{
+    printf("How would like to search for a profile?\n");
+    printf("1. By name \n 2. By type \n 3. By Birthday (for individuals only)\n");
+    int searchType;
+    scanf("%d", &searchType);
+
+    switch (searchType)
+    {
+    case 1:
+    {
+        char name[limit];
+        printf("Enter Name: ");
+        scanf("%s", name);
+        searchProfileByName(name);
+        break;
+        break;
+    }
+    case 2:
+    {
+        listProfiles();
+        break;
+    }
+    case 3:
+    {
+        int day, month, year;
+        while (true)
+        {
+            printf("Enter day : \n");
+            scanf("%d", &day);
+            printf("Enter month: \n");
+            scanf("%d", &month);
+            printf("Enter year: \n");
+            scanf("%d", &year);
+            int currYear = getCurrentDate().year;
+            if (day > 31 || day < 1 || month < 1 || month > 12 || year > currYear || year < 1)
+            {
+                printf("Enter a valid birthdate! \n");
+                continue;
+            }
+            else
+                break;
+        }
+        date birthday;
+        birthday.day = day;
+        birthday.month = month;
+        birthday.year = year;
+        searchIndividualsByBirthday(birthday);
+        break;
+        break;
+    }
+    default:
+        printf("Invalid input. Please provide an valid input \n");
+        break;
+    }
+}
+
+void listProfiles()
+{
     printf("List of which type of profiles would you like to see?\n");
     displayOptions(2);
     int type;
     scanf("%d", &type);
-    switch(type){
-        case 1:{
-            listIndividuals();
-            break;
+    switch (type)
+    {
+    case 1:
+    {
+        listIndividuals();
+        break;
+    }
+    case 2:
+    {
+        listBusinesses();
+        break;
+    }
+    case 3:
+    {
+        listGroups();
+        break;
+    }
+    case 4:
+    {
+        listOrganisations();
+        break;
+    }
+    default:
+    {
+        printf("Invalid Input.\n");
+    }
+    }
+}
+
+void createContentForInd()
+{
+    int id;
+    listIndividuals();
+    printf("Enter ID of the individual for which you'd like to add content:\n");
+    scanf("%d", &id);
+
+    individual *person = getIndividualById(id);
+
+    if (person != NULL)
+    {
+        char buffer[limit];
+        printf("Individual found. Enter content: ");
+
+        // Clear the input buffer
+        int c;
+        while ((c = getchar()) != '\n' && c != EOF)
+            ;
+
+        if (fgets(buffer, sizeof(buffer), stdin) != NULL)
+        {
+            // Remove the trailing newline character
+            size_t len = strlen(buffer);
+            if (len > 0 && buffer[len - 1] == '\n')
+            {
+                buffer[len - 1] = '\0';
+            }
+
+            // Dynamic memory allocation for content
+            person->ind.content[person->ind.contentCount] = strdup(buffer);
+            if (person->ind.content[person->ind.contentCount] != NULL)
+            {
+                // Increment the count of stored content
+                person->ind.contentCount++;
+                printf("Content added successfully\n");
+            }
+            else
+            {
+                printf("Memory allocation error\n");
+            }
         }
-        case 2:{
-            listBusinesses();
-            break;
+        else
+        {
+            printf("Error reading input\n");
         }
-        case 3:{
-            listGroups();
-            break;
+    }
+    else
+    {
+        printf("Invalid individual or ID\n");
+    }
+}
+
+void createContentForBiz()
+{
+    int id;
+    listBusinesses();
+    printf("Enter ID of the business for which you'd like to add content:\n");
+    scanf("%d", &id);
+
+    business *biz = getBizById(id);
+
+    // Clear the input buffer
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF)
+        ;
+
+    if (biz != NULL)
+    {
+        char buffer[limit];
+        printf("Business found. Enter content: ");
+        if (fgets(buffer, sizeof(buffer), stdin) != NULL)
+        {
+            // Remove the trailing newline character
+            size_t len = strlen(buffer);
+            if (len > 0 && buffer[len - 1] == '\n')
+            {
+                buffer[len - 1] = '\0';
+            }
+
+            // Dynamic memory allocation for content
+            biz->biz.content[biz->biz.contentCount] = strdup(buffer);
+            if (biz->biz.content[biz->biz.contentCount] != NULL)
+            {
+                // Increment the count of stored content
+                biz->biz.contentCount++;
+                printf("Content added successfully\n");
+            }
+            else
+            {
+                printf("Memory allocation error\n");
+            }
         }
-        case 4:{
-            listOrganisations();
-            break;
+        else
+        {
+            printf("Error reading input\n");
         }
-        default:{
-            printf("Invalid Input.\n");
+    }
+    else
+    {
+        printf("Invalid Business or ID\n");
+    }
+}
+
+void createContentForGrp()
+{
+    int id;
+    listGroups();
+    printf("Enter ID of the group for which you'd like to add content:\n");
+    scanf("%d", &id);
+
+    group *grp = getGrpById(id);
+
+    // Clear the input buffer
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF)
+        ;
+
+    if (grp != NULL)
+    {
+        char buffer[limit];
+        printf("Group found. Enter content: ");
+        if (fgets(buffer, sizeof(buffer), stdin) != NULL)
+        {
+            // Remove the trailing newline character
+            size_t len = strlen(buffer);
+            if (len > 0 && buffer[len - 1] == '\n')
+            {
+                buffer[len - 1] = '\0';
+            }
+
+            // Dynamic memory allocation for content
+            grp->grps.content[grp->grps.contentCount] = strdup(buffer);
+            if (grp->grps.content[grp->grps.contentCount] != NULL)
+            {
+                // Increment the count of stored content
+                grp->grps.contentCount++;
+                printf("Content added successfully\n");
+            }
+            else
+            {
+                printf("Memory allocation error\n");
+            }
+        }
+        else
+        {
+            printf("Error reading input\n");
+        }
+    }
+    else
+    {
+        printf("Invalid Business or ID\n");
+    }
+}
+
+void createContentForOrg()
+{
+    int id;
+    listOrganisations();
+    printf("Enter ID of the Organisation for which you'd like to add content:\n");
+    scanf("%d", &id);
+
+    organisation *org = getOrgById(id);
+
+    // Clear the input buffer
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF)
+        ;
+
+    if (org != NULL)
+    {
+        char buffer[limit];
+        printf("Organisation found. Enter content: ");
+        if (fgets(buffer, sizeof(buffer), stdin) != NULL)
+        {
+            // Remove the trailing newline character
+            size_t len = strlen(buffer);
+            if (len > 0 && buffer[len - 1] == '\n')
+            {
+                buffer[len - 1] = '\0';
+            }
+
+            // Dynamic memory allocation for content
+            org->org.content[org->org.contentCount] = strdup(buffer);
+            if (org->org.content[org->org.contentCount] != NULL)
+            {
+                // Increment the count of stored content
+                org->org.contentCount++;
+                printf("Content added successfully\n");
+            }
+            else
+            {
+                printf("Memory allocation error\n");
+            }
+        }
+        else
+        {
+            printf("Error reading input\n");
+        }
+    }
+    else
+    {
+        printf("Invalid Business or ID\n");
+    }
+}
+
+void createContentForType(int type)
+{
+    switch (type)
+    {
+    case 1:
+    {
+        createContentForInd();
+        break;
+    }
+    case 2:
+    {
+        createContentForBiz();
+        break;
+    }
+    case 3:
+    {
+        createContentForGrp();
+        break;
+    }
+    case 4:
+    {
+        createContentForOrg();
+        break;
+    }
+    default:
+    {
+        printf("Invalid input");
+        break;
+    }
+    }
+}
+
+void createContent()
+{
+    printf("Enter the type of profile for which you'll like to add content.\n");
+    displayOptions(2);
+    int type;
+    scanf("%d", &type);
+    createContentForType(type);
+}
+
+void searchProfilesBySubstring(char *substring)
+{
+    printf("Search Results for Substring '%s':\n", substring);
+
+    // Search in individual profiles
+    for (int i = 0; i < individual_count; i++)
+    {
+        for (int j = 0; i < individual_list[i]->ind.contentCount; j++)
+        {
+            if (strstr(individual_list[i]->ind.content[j], substring) != NULL)
+            {
+                printf("Individual ID: %d, Name: %s\n", individual_list[i]->ind.id, individual_list[i]->ind.name);
+                printf("Full Content: %s\n\n", individual_list[i]->ind.content[j]);
+            }
+        }
+    }
+
+    // Search in business profiles
+    for (int i = 0; i < biz_count; i++)
+    {
+        for (int j = 0; j < biz_list[i]->biz.contentCount; j++)
+        {
+            if (strstr(biz_list[i]->biz.content[j], substring) != NULL)
+            {
+                printf("Business ID: %d, Name: %s\n", biz_list[i]->biz.id, biz_list[i]->biz.name);
+                printf("Full Content: %s\n\n", biz_list[i]->biz.content[j]);
+            }
+        }
+    }
+
+    // Search in group profiles
+    for (int i = 0; i < grp_count; i++)
+    {
+        for (int j = 0; j < grp_list[i]->grps.contentCount; j++)
+        {
+            if (strstr(grp_list[i]->grps.content[j], substring) != NULL)
+            {
+                printf("Group ID: %d, Name: %s\n", grp_list[i]->grps.id, grp_list[i]->grps.name);
+                printf("Full Content: %s\n\n", grp_list[i]->grps.content[j]);
+            }
+        }
+    }
+
+    // Search in organization profiles
+    for (int i = 0; i < org_count; i++)
+    {
+        for (int j = 0; j < org_list[i]->org.contentCount; j++)
+        {
+            if (strstr(org_list[i]->org.content[j], substring) != NULL)
+            {
+                printf("Organization ID: %d, Name: %s\n", org_list[i]->org.id, org_list[i]->org.name);
+                printf("Full Content: %s\n\n", org_list[i]->org.content[j]);
+            }
         }
     }
 }
+
+void searchContent()
+{
+    printf("Enter substring to search for content:\n");
+
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF)
+        ;
+
+    char buffer[limit];
+
+    if (fgets(buffer, sizeof(buffer), stdin) != NULL)
+    {
+        // Remove the trailing newline character
+        size_t len = strlen(buffer);
+        if (len > 0 && buffer[len - 1] == '\n')
+        {
+            buffer[len - 1] = '\0';
+        }
+
+        searchProfilesBySubstring(buffer);
+    }
+}
+
+void getSameGroupOrOrgIndividuals(individual *person)
+{
+    if (person != NULL)
+    {
+        printf("Individual ID: %d, Name: %s\n", person->ind.id, person->ind.name);
+        printf("Sharing same group and/or organization with:\n");
+
+        // Check for individuals in the same group
+        for (int i = 0; i < person->linkedGrpsCount; i++)
+        {
+            group *grp = person->linkedGrps[i];
+            for (int j = 0; j < grp->indMemberCount; j++)
+            {
+                if (grp->members[j] != person)
+                {
+                    printf("ID: %d, Name: %s\n", grp->members[j]->ind.id, grp->members[j]->ind.name);
+                }
+            }
+        }
+
+        // Check for individuals in the same organization
+        for (int i = 0; i < person->linkedOrgsCount; i++)
+        {
+            organisation *org = person->linkedOrgs[i];
+            for (int j = 0; j < org->memberCount; j++)
+            {
+                if (org->members[j] != person)
+                {
+                    printf("ID: %d, Name: %s\n", org->members[j]->ind.id, org->members[j]->ind.name);
+                }
+            }
+        }
+    }
+    else
+    {
+        printf("Invalid individual\n");
+    }
+}
+
+void searchForLinkedIndividuals()
+{
+    char name[limit];
+    printf("Enter the name of the individual:\n");
+    scanf("%s", name);
+
+    int *resultIds = NULL;
+    int resultCount;
+
+    searchProfile(typeIndividual, name, &resultCount, &resultIds);
+
+    if (resultCount == 0)
+    {
+        printf("No such individual found in the database! Add the individual into the database first. \n");
+    }
+    else if (resultCount == 1)
+        {
+            printf("Individual Profile found in the database");
+            // Search by ID, return pointer
+            getSameGroupOrOrgIndividuals(getIndividualById(resultIds[0]));
+        }
+        else{
+            displayMultipleIndividuals(resultCount, resultIds);
+            printf("Enter the id of the owner(s) from the list : \n");
+            int id;
+            while (true)
+                {
+                    scanf("%d", &id);
+                    if (getIndividualById(id) == NULL)
+                    {
+                        printf("Invalid individual ID entered. Please try again.\n");
+                        continue;
+                    }
+                    else
+                        break;
+                }
+            individual *person = getIndividualById(id);
+            getSameGroupOrOrgIndividuals(person);   
+        }
+    
+}
+
+void printLinksForInd() {
+    int id;
+    listIndividuals(); 
+    printf("Enter ID of the individual for which you'd like to print links:\n");
+    scanf("%d", &id);
+
+    individual *person = NULL;
+
+    // Search for the individual with the specified ID
+    for (int i = 0; i < individual_count; i++) {
+        if (individual_list[i] != NULL && individual_list[i]->ind.id == id) {
+            person = individual_list[i];
+            break;
+        }
+    }
+
+    if (person != NULL) {
+        displaySeparatorWithType(limit);
+        printf("Links for Individual ID: %d, Name: %s\n", person->ind.id, person->ind.name);
+
+        // Print links to groups
+        displaySeparatorWithType(typeGroup);
+        for (int i = 0; i < person->linkedGrpsCount; i++) {
+            printf("- Group ID: %d, Name: %s\n", person->linkedGrps[i]->grps.id, person->linkedGrps[i]->grps.name);
+        }
+
+        displaySeparatorWithType(typeOrganisation);
+        for (int i = 0; i < person->linkedOrgsCount; i++) {
+            printf("- Organization ID: %d, Name: %s\n", person->linkedOrgs[i]->org.id, person->linkedOrgs[i]->org.name);
+        }
+
+        //Print owned businesses
+        displaySeparatorWithType(typeBusiness);
+        printf("Businesses owned:\n");
+        for(int i=0;i<person->ownerOfCount;i++){
+            printf("- Business ID: %d, Name: %s\n", person->ownerOf[i]->biz.id, person->ownerOf[i]->biz.name);
+        }
+        printf("\nCustomer to \n");
+        for(int i=0;i<person->customerOfCount;i++){
+            printf("- Business ID: %d, Name: %s\n", person->customerOf[i]->biz.id, person->customerOf[i]->biz.name);
+        }
+
+
+    } else {
+        printf("Individual not found.\n");
+    }
+}
+
+void printLinksForBiz() {
+    int id;
+    listProfiles(); // Assuming this function lists all profiles
+    printf("Enter ID of the business for which you'd like to print links:\n");
+    scanf("%d", &id);
+
+    business *biz = NULL;
+
+    // Search for the business with the specified ID
+    for (int i = 0; i < limit; i++) {
+        if (biz_list[i] != NULL && biz_list[i]->biz.id == id) {
+            biz = biz_list[i];
+            break;
+        }
+    }
+
+    if (biz != NULL) {
+        displaySeparatorWithType(typeIndividual);
+        printf("Customers of Business ID: %d, Name: %s\n", biz->biz.id, biz->biz.name);
+
+        // Print links to individual customers
+        for (int i = 0; i < biz->customerCount; i++) {
+            printf("- Individual ID: %d, Name: %s\n", biz->customers[i]->ind.id, biz->customers[i]->ind.name);
+        }
+
+        printf("Owners of Business ID: %d, Name: %s\n", biz->biz.id, biz->biz.name);
+
+        // Print links to individual owners
+        for (int i = 0; i < biz->ownerCount; i++) {
+            printf("- Individual ID: %d, Name: %s\n", biz->owners[i]->ind.id, biz->owners[i]->ind.name);
+        }
+
+        displaySeparatorWithType(typeGroup);
+        printf("Member groups of Business ID: %d, Name: %s\n", biz->biz.id, biz->biz.name);
+
+        // Print links to groups
+        for (int i = 0; i < biz->memberOfCount; i++) {
+            printf("- Group ID: %d, Name: %s\n", biz->memberOf[i]->grps.id, biz->memberOf[i]->grps.name);
+        }
+    } else {
+        printf("Business not found.\n");
+    }
+}
+
+void printLinksForType(int type){
+    switch (type) {
+    case typeIndividual:
+        printLinksForInd();
+        break;
+    case typeBusiness:
+        printLinksForBiz();
+        break;
+    case typeGroup:
+        // printLinksForGrp();
+        break;
+    case typeOrganisation:
+        // printLinksForOrg();
+        break;
+    default:
+        printf("Invalid input");
+        break;
+}
+
+}
+
+void oneHopLinks(){
+    printf("Enter the type of profile for which you'll like to print links.\n");
+    displayOptions(2);
+    int type;
+    scanf("%d", &type);
+    printLinksForType(type);
+}
+
 
 void Create()
 {
@@ -1132,33 +1919,54 @@ void Create()
 int main()
 {
     int choice;
-    while(true){
-    printf("What would you like to do?\n");
-    displayOptions(1);
-    scanf("%d", &choice);
-    switch(choice){
-        case 1:{
+    while (true)
+    {
+        printf("What would you like to do?\n");
+        displayOptions(1);
+        scanf("%d", &choice);
+        switch (choice)
+        {
+        case 1:
+        {
             Create();
             break;
         }
-        case 2:{
+        case 2:
+        {
             deleteProfile();
             break;
         }
-        case 3:{
-            //Search for a profile
+        case 3:
+        {
+            search();
             break;
         }
-        case 4: {
-            listProfiles();
+        case 4:
+        {
+            oneHopLinks();
             break;
-        }   
-        default: {
+        }
+        case 5:
+        {
+            createContent();
+            break;
+        }
+        case 6:
+        {
+            searchContent();
+            break;
+        }
+        case 7:
+        {
+            searchForLinkedIndividuals();
+            break;
+        }
+        default:
+        {
             printf("Invalid input. Please provide an input from the given options.");
             continue;
         }
-    }
-    
+        }
     }
 
     // printf("test name : %s", individual_list[0]->ind.name);
