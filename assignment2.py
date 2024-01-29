@@ -75,6 +75,7 @@ class MyApp:
         self.profile_type = None
         self.gender = None
         self.User = None
+        self.editedUser = None
 
         self.create_home_page()
         self.create_registration_page()
@@ -382,6 +383,8 @@ class MyApp:
         password = self.password_entry_signin.get()
         user_ID = self.user_id_entry_signin.get()
 
+        found_count = 0
+
 
         for teacher in teachers_list:
             print(teacher.user_ID)
@@ -389,6 +392,7 @@ class MyApp:
                 if(teacher.password == password and teacher.profile_status == "Active"):
                     teacher.tries = 3
                     print("Sign in successfull. Profile type - teacher")
+                    found_count+=1
                     self.User = teacher
                     self.create_post_login_page()
                     self.show_post_login_page()
@@ -404,15 +408,14 @@ class MyApp:
                 elif(teacher.password == password and teacher.profile_status != "Active"):
                     self.deactivatedInfo()
                     print("That account has been deactivated.")
-            else:
-                self.profileNotFound()
-                print("No profile with that userID found.")
+        
 
         for student in UG_list:
             if(student.user_ID == user_ID):
                 if(student.password == password and student.profile_status == "Active"):
                     student.tries = 3
                     print("UG student found. Sign in successfull")
+                    found_count+=1
                     self.User = student
                     self.create_post_login_page()
                     self.show_post_login_page()
@@ -428,9 +431,6 @@ class MyApp:
                 elif(student.password == password and student.profile_status != "Active"):
                     self.deactivatedInfo()
                     print("Deactivated")
-            else:
-                self.profileNotFound()
-                print("No profile with that userID found.")
 
         
         for student in PG_list:
@@ -438,6 +438,7 @@ class MyApp:
                 if(student.password == password and student.profile_status == "Active"):
                     student.tries = 3
                     print("PG student found. Sign in successfull")
+                    found_count+=1
                     self.User = student
                     self.create_post_login_page()
                     self.show_post_login_page()
@@ -454,9 +455,8 @@ class MyApp:
                 elif(student.password == password and student.profile_status != "Active"):
                     self.deactivatedInfo()
                     print("That account has been deactivated.")
-            else:
-                self.profileNotFound()
-                print("No profile with that userID found.")
+
+        if found_count==0 : self.profileNotFound()
 
     def create_post_login_page(self):
         
@@ -464,6 +464,8 @@ class MyApp:
         # Create widgets for the post-login page
         welcome_label = tk.Label(self.post_login_frame, text="Welcome to the Academic Unit!", font=("Helvetica", 16))
         logout_button = tk.Button(self.post_login_frame, text="Logout", command=self.logout, font=btn_font)
+        edit_info_btn = tk.Button(self.post_login_frame, text="Edit", command=self.edit_info, font=btn_font)
+        dereg_btn = tk.Button(self.post_login_frame, text="Deregister", command=self.deregister, font=btn_font)
         name_label = tk.Label(self.post_login_frame, text="Name :     ", font=("Helvetica", 10))
         user_id_label = tk.Label(self.post_login_frame, text="User ID :", font=("Helvetica", 10))
         age_id_label = tk.Label(self.post_login_frame, text="Age :", font=("Helvetica", 10))
@@ -520,10 +522,137 @@ class MyApp:
             roll.grid(row=7, column=1, sticky="w", padx=(0, 20))
         # Pack widgets
         welcome_label.grid(row=0, column=0, columnspan=2, pady=(20, 10))
-        logout_button.grid(row=9, column=2, pady=(20, 10))
+        logout_button.grid(row=9, column=1, pady=(20, 10))
+        dereg_btn.grid(row=9,column=2,  pady=(20,10))
+        edit_info_btn.grid(row=9, column=0, pady=(20,10))
+
+    def deregister(self):
+        if isinstance(self.User, Teacher):
+            teachers_list.remove(self.User)
+        elif isinstance(self.User, PostgraduateStudent):
+            PG_list.remove(self.User)
+        elif isinstance(self.User, UndergraduateStudent):
+            UG_list.remove(self.User)
+        
+        self.deregisteredAlert()
+        
+        self.logout()
+        
+
+    def deregisteredAlert(self):
+        messagebox.showinfo("Deregistered", "User deregistered!")
+
+    def edit_info(self):
+        edit_dict = {}
+        edit_window = tk.Toplevel(self.root)
+        edit_window.title("Edit Profile")
+
+        new_name_label = tk.Label(edit_window, text="New Name:", font=text_font)
+        new_name_entry = tk.Entry(edit_window)
+        new_age_label = tk.Label(edit_window, text="New Age:", font=text_font)
+        new_age_entry = tk.Entry(edit_window)
+        new_password_label = tk.Label(edit_window, text="New Password:", font=text_font)
+        new_password_entry = tk.Entry(edit_window)
+        new_userID_label = tk.Label(edit_window, text="New UserID:", font=text_font)
+        new_userID_entry = tk.Entry(edit_window)
+
+        new_name_label.grid(row=0, column=0, sticky="e", padx=(20, 0))
+        new_name_entry.grid(row=0, column=1, sticky="w", padx=(0, 20))
+        new_age_label.grid(row=1, column=0, sticky="e", padx=(20, 0))
+        new_age_entry.grid(row=1, column=1, sticky="w", padx=(0, 20))
+        new_password_label.grid(row=2, column=0, sticky="e", padx=(20, 0))
+        new_password_entry.grid(row=2, column=1, sticky="w", padx=(0, 20))
+        new_userID_label.grid(row=3, column=0, sticky="e", padx=(20, 0))
+        new_userID_entry.grid(row=3, column=1, sticky="w", padx=(0, 20))
+
+
+        edit_dict["name"] = new_name_entry
+        edit_dict["age"] = new_age_entry
+        edit_dict["userID"] = new_userID_entry
+        edit_dict["password"] = new_password_entry
+        
+        if isinstance(self.User, UndergraduateStudent):
+            new_roll_label = tk.Label(edit_window, text="New Roll number:", font=text_font)
+            new_roll_entry = tk.Entry(edit_window)
+            new_dept_label = tk.Label(edit_window, text="New Department:", font=text_font)
+            new_dept_entry = tk.Entry(edit_window)
+
+            edit_dict["studentID"] = new_roll_entry
+            edit_dict["department"] = new_dept_entry
+
+            new_roll_label.grid(row=4, column=0, sticky="e", padx=(20, 0))
+            new_roll_entry.grid(row=4, column=1, sticky="w", padx=(0, 20))
+            new_dept_label.grid(row=5, column=0, sticky="e", padx=(20, 0))
+            new_dept_entry.grid(row=5, column=1, sticky="w", padx=(0, 20))
+
+            
+
+
+        
+        elif isinstance(self.User, PostgraduateStudent):
+            new_roll_label = tk.Label(edit_window, text="New Roll number:", font=text_font)
+            new_roll_entry = tk.Entry(edit_window)
+            new_RS_label = tk.Label(edit_window, text="New Research Area:", font=text_font)
+            new_RS_entry = tk.Entry(edit_window)
+
+            edit_dict["studentID"] = new_age_entry
+            edit_dict["researchArea"] = new_RS_entry
+
+            new_roll_label.grid(row=4, column=0, sticky="e", padx=(20, 0))
+            new_roll_entry.grid(row=4, column=1, sticky="w", padx=(0, 20))
+            new_RS_label.grid(row=5, column=0, sticky="e", padx=(20, 0))
+            new_RS_entry.grid(row=5, column=1, sticky="w", padx=(0, 20))
+
+
+        
+        else :
+            new_dept_label = tk.Label(edit_window, text="New Department:", font=text_font)
+            new_dept_entry = tk.Entry(edit_window)
+
+            edit_dict["department"] = new_dept_entry
+            
+            new_dept_label.grid(row=4, column=0, sticky="e", padx=(20, 0))
+            new_dept_entry.grid(row=4, column=1, sticky="w", padx=(0, 20))
+
+        
+        save_button = tk.Button(edit_window, text="Save Changes", command=lambda: self.save_changes(edit_dict), font=btn_font)
+        save_button.grid(row=6, column=0, columnspan=2, pady=(20, 0))
+
+        
+    def save_changes(self,edit_dict):
+
+        print("Saving changes")
+
+        print(edit_dict["name"].get())
+        
+
+        self.User.name = edit_dict["name"].get()
+        self.User.age = edit_dict["age"].get()
+        self.User.user_ID = edit_dict["userID"].get()
+        self.User.password = edit_dict["password"].get()
+
+        if isinstance(self.User, Teacher):
+            self.User.department = edit_dict["department"].get()
+        elif isinstance(self.User, UndergraduateStudent):
+            self.User.student_id = edit_dict["studentID"].get()
+            self.User.department = edit_dict["department"].get()
+        else:
+            self.User.research_area = edit_dict["researchArea"].get()
+            self.User.student_id = edit_dict["studentID"].get()
+
+        
+        for widget in self.post_login_frame.winfo_children():
+            widget.destroy()
+        
+        self.create_post_login_page()
+        self.show_post_login_page()
+        
+
+
+        
 
     def profileNotFound(self):
-        messagebox.showerror("Profile Not found","No profile with the given user ID exist in the database")
+        messagebox.showinfo("Profile Not found","No profile with the given user ID exist in the database")
 
     def deactivatedInfo(self):
         messagebox.showwarning("Account Deactivated", "Error signing in. The account has been deactivated")
