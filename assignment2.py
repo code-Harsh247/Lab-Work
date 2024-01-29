@@ -14,22 +14,11 @@ class Person:
         self.tries = 3
         
 
-    def display_info(self):
-        print(f"Name: {self.name}, Age: {self.age}")
-
-
 class Teacher(Person):
     def __init__(self, name, user_ID, password, age, employee_id, department, profile_status, gender):
         super().__init__(name, age, user_ID, password, profile_status, gender)
         self.employee_id = employee_id
         self.department = department
-
-    def display_info(self):
-        super().display_info()
-        print(f"Employee ID: {self.employee_id}, Department: {self.department}")
-
-    def teach(self, subject):
-        print(f"{self.name} is teaching {subject}")
 
 
 class Student(Person):
@@ -38,23 +27,11 @@ class Student(Person):
         self.student_id = student_id
         self.courses = []
 
-    def display_info(self):
-        super().display_info()
-        print(f"Student ID: {self.student_id}")
-
-    def enroll_course(self, course):
-        self.courses.append(course)
-        print(f"{self.name} has enrolled in the course: {course}")
-
-
 class UndergraduateStudent(Student):
     def __init__(self, name, age, student_id, department, user_ID, password, profile_status, gender):
         super().__init__(name, age, student_id, user_ID, password, profile_status, gender)
         self.department = department
 
-    def display_info(self):
-        super().display_info()
-        print(f"Program: {self.program}")
 
 
 class PostgraduateStudent(Student):
@@ -62,9 +39,6 @@ class PostgraduateStudent(Student):
         super().__init__(name, age, student_id,user_ID, password, profile_status, gender)
         self.research_area = research_area
 
-    def display_info(self):
-        super().display_info()
-        print(f"Research Area: {self.research_area}")
 
 header_font = ("Helvetica", 30, "italic bold")
 btn_font = ("Helvetica", 15)
@@ -383,47 +357,89 @@ class MyApp:
             teacher_profile = Teacher(user_profile.name, user_profile.user_ID, user_profile.password, user_profile.age, employee_id, department, user_profile.profile_status, self.gender )
             teachers_list.append(teacher_profile)
             print(teacher_profile.name, teacher_profile.age, teacher_profile.department, teacher_profile.employee_id, teacher_profile.gender, teacher_profile.user_ID, teacher_profile.password, teacher_profile.tries)
-
+            
     
     def sign_in(self):
-        password = self.password_entry_register.get()
-        user_ID = self.password_entry_register.get()
+        password = self.password_entry_signin.get()
+        user_ID = self.user_id_entry_signin.get()
 
-        
+
 
         for teacher in teachers_list:
+            print(teacher.user_ID)
             if(teacher.user_ID == user_ID):
-                if(teacher.password == password):
+                if(teacher.password == password and teacher.profile_status == "Active"):
+                    teacher.tries = 3
                     print("Sign in successfull. Profile type - teacher")
-                else:
+                elif(teacher.password != password and teacher.profile_status == "Active"):
                     print("User found but incorrect password entered")
-                    teacher.tries 
-                    self.incorrectPassword()
+                    teacher.tries -= 1
+                    if(teacher.tries < 0):
+                        teacher.profile_status = "Deactivated"
+                        self.deactivatedInfo()
+                        print("That account has been deactivated.")
+                    else:
+                        self.incorrectPassword(teacher.tries)
+                elif(teacher.password == password and teacher.profile_status != "Active"):
+                    self.deactivatedInfo()
+                    print("That account has been deactivated.")
+            else:
+                self.profileNotFound()
+                print("No profile with that userID found.")
 
         for student in UG_list:
             if(student.user_ID == user_ID):
-                if(student.password == password):
+                if(student.password == password and student.profile_status == "Active"):
+                    student.tries = 3
                     print("UG student found. Sign in successfull")
-                else:
+                elif(student.password != password and student.profile_status == "Active"):
                     print("User found but incorrect password entered")
-                    self.incorrectPassword()
-
+                    student.tries -= 1
+                    if(student.tries < 0):
+                        student.profile_status = "Deactivated"
+                        self.deactivatedInfo()
+                        print("That account has been deactivated.")
+                    else:
+                        self.incorrectPassword(student)
+                elif(student.password == password and student.profile_status != "Active"):
+                    self.deactivatedInfo()
+                    print("Deactivated")
+            else:
+                self.profileNotFound()
+                print("No profile with that userID found.")
 
         
         for student in PG_list:
             if(student.user_ID == user_ID):
-                print("PG student found")
-            else:
-                if(student.password == password):
+                if(student.password == password and student.profile_status == "Active"):
+                    student.tries = 3
                     print("PG student found. Sign in successfull")
-                else:
+                elif(student.password != password and student.profile_status == "Active"):
                     print("User found but incorrect password entered")
-                    self.incorrectPassword()
+                    student.tries -= 1
+                    if(student.tries < 0):
+                        student.profile_status = "Deactivated"
+                        self.deactivatedInfo()
+                        print("That account has been deactivated.")
+                    else:
+                        self.incorrectPassword(student)
+                        
+                elif(student.password == password and student.profile_status != "Active"):
+                    self.deactivatedInfo()
+                    print("That account has been deactivated.")
+            else:
+                self.profileNotFound()
+                print("No profile with that userID found.")
+
+    def profileNotFound(self):
+        messagebox.showerror("Profile Not found","No profile with the given user ID exist in the database")
+
+    def deactivatedInfo(self):
+        messagebox.showwarning("Account Deactivated", "Error signing in. The account has been deactivated")
 
 
-
-    def incorrectPassword():
-        messagebox.showinfo("Alert")
+    def incorrectPassword(self, tries_remaining):
+        messagebox.showwarning("Incorrect Password", f"The user exists in the database but the entered password is incorrect. You have only {tries_remaining} tries remaining.")
     
     def go_back(self):
         # Check if there is a frame in the history
