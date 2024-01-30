@@ -1,5 +1,6 @@
-import tkinter as tk;
+import tkinter as tk
 from tkinter import messagebox
+import json
 
 
 
@@ -12,37 +13,89 @@ class Person:
         self.profile_status = profile_status
         self.gender = gender
         self.tries = 3
+    
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "age": self.age,
+            "user_ID": self.user_ID,
+            "password": self.password,
+            "profile_status": self.profile_status,
+            "gender": self.gender,
+            "tries": self.tries
+        }
         
 
 class Teacher(Person):
-    def __init__(self, name, user_ID, password, age, employee_id, department, profile_status, gender):
+    def __init__(self, name, user_ID, password, age, employee_id, department, profile_status, gender,tries=3):
         super().__init__(name, age, user_ID, password, profile_status, gender)
         self.employee_id = employee_id
         self.department = department
+    
+    def to_dict(self):
+        teacher_dict = super().to_dict()
+        teacher_dict.update({
+            "employee_id": self.employee_id,
+            "department": self.department
+        })
+        return teacher_dict
 
 
 class Student(Person):
-    def __init__(self, name, age, student_id, user_ID, password, profile_status, gender):
+    def __init__(self, name, age, student_id, user_ID, password, profile_status, gender,tries=3):
         super().__init__(name, age, user_ID, password, profile_status, gender)
         self.student_id = student_id
-        self.courses = []
+    
+    def to_dict(self):
+        student_dict = super().to_dict()
+        student_dict.update({
+            "student_id": self.student_id,
+        })
+        return student_dict
 
 class UndergraduateStudent(Student):
-    def __init__(self, name, age, student_id, department, user_ID, password, profile_status, gender):
+    def __init__(self, name, age, student_id, department, user_ID, password, profile_status, gender,tries=3):
         super().__init__(name, age, student_id, user_ID, password, profile_status, gender)
         self.department = department
+    
+    def to_dict(self):
+        ug_dict = super().to_dict()
+        ug_dict.update({
+            "department": self.department
+        })
+        return ug_dict
 
 
 
 class PostgraduateStudent(Student):
-    def __init__(self, name, age, student_id, research_area, user_ID, password, profile_status, gender):
+    def __init__(self, name, age, student_id, research_area, user_ID, password, profile_status, gender,tries=3):
         super().__init__(name, age, student_id,user_ID, password, profile_status, gender)
         self.research_area = research_area
+    
+    def to_dict(self):
+        pg_dict = super().to_dict()
+        pg_dict.update({
+            "research_area": self.research_area
+        })
+        return pg_dict
 
 
 header_font = ("Helvetica", 30, "italic bold")
 btn_font = ("Helvetica", 15)
 text_font = ("Helvetica", 15)
+
+def update_json_file(filename, data_list):
+    with open(filename, "w") as file:
+        json.dump(data_list, file, indent=2)
+
+def create_teacher_from_dict(teacher_dict):
+    return Teacher(**teacher_dict)
+
+def create_ug_student_from_dict(ug_student_dict):
+    return UndergraduateStudent(**ug_student_dict)
+
+def create_pg_student_from_dict(pg_student_dict):
+    return PostgraduateStudent(**pg_student_dict)
 
 
 #--------- DataBase ---------#
@@ -51,8 +104,23 @@ teachers_list = []
 PG_list =[]
 UG_list =[]
 
-#----------------------------#
+def read_json_file(filename):
+    try:
+        with open(filename, "r") as file:
+            data = json.load(file)
+        return data
+    except FileNotFoundError:
+        return []
 
+teacher_data = read_json_file("teacher_data.json")
+ug_student_data = read_json_file("UG_Students_data.json")
+pg_student_data = read_json_file("PG_Students_data.json")
+
+teachers_list = [create_teacher_from_dict(teacher_dict) for teacher_dict in teacher_data]
+UG_list = [create_ug_student_from_dict(ug_student_dict) for ug_student_dict in ug_student_data]
+PG_list = [create_pg_student_from_dict(pg_student_dict) for pg_student_dict in pg_student_data]
+
+#----------------------------#
 
 
 class MyApp:
@@ -341,6 +409,8 @@ class MyApp:
 
         ug_profile = UndergraduateStudent(user_profile.name, user_profile.age, roll, dept, user_profile.user_ID, user_profile.password,user_profile.profile_status, self.gender)
         UG_list.append(ug_profile)
+        new_UG_data = [UG.to_dict() for UG in UG_list]
+        update_json_file("UG_Students_data.json", new_UG_data)
         print(ug_profile.name, ug_profile.age,ug_profile.student_id ,ug_profile.department, ug_profile.user_ID, ug_profile.password)
 
     def appendPGDetails(self, research_area_entry, roll_entry):
@@ -355,6 +425,8 @@ class MyApp:
 
         pg_profile = PostgraduateStudent(user_profile.name, user_profile.age, roll, research_area, user_profile.user_ID, user_profile.password, user_profile.profile_status, self.gender)
         PG_list.append(pg_profile)
+        new_PG_data = [PG.to_dict() for PG in PG_list]
+        update_json_file("PG_Students_data.json", new_PG_data)
         print(pg_profile.name, pg_profile.age,pg_profile.student_id, pg_profile.research_area, pg_profile.user_ID, pg_profile.password)
 
     def appendTeacherDetails(self, employee_id_entry, department_entry):
@@ -371,6 +443,8 @@ class MyApp:
 
             teacher_profile = Teacher(user_profile.name, user_profile.user_ID, user_profile.password, user_profile.age, employee_id, department, user_profile.profile_status, self.gender )
             teachers_list.append(teacher_profile)
+            new_teacher_data = [teacher.to_dict() for teacher in teachers_list]
+            update_json_file("teacher_data.json", new_teacher_data)
             print(teacher_profile.name, teacher_profile.age, teacher_profile.department, teacher_profile.employee_id, teacher_profile.gender, teacher_profile.user_ID, teacher_profile.password, teacher_profile.tries)
     
     def logout(self):
@@ -398,6 +472,7 @@ class MyApp:
                     self.show_post_login_page()
                 elif(teacher.password != password and teacher.profile_status == "Active"):
                     print("User found but incorrect password entered")
+                    found_count+=1
                     teacher.tries -= 1
                     if(teacher.tries < 0):
                         teacher.profile_status = "Deactivated"
@@ -421,6 +496,7 @@ class MyApp:
                     self.show_post_login_page()
                 elif(student.password != password and student.profile_status == "Active"):
                     print("User found but incorrect password entered")
+                    found_count+=1
                     student.tries -= 1
                     if(student.tries < 0):
                         student.profile_status = "Deactivated"
@@ -444,6 +520,7 @@ class MyApp:
                     self.show_post_login_page()
                 elif(student.password != password and student.profile_status == "Active"):
                     print("User found but incorrect password entered")
+                    found_count+=1
                     student.tries -= 1
                     if(student.tries < 0):
                         student.profile_status = "Deactivated"
@@ -466,7 +543,7 @@ class MyApp:
         logout_button = tk.Button(self.post_login_frame, text="Logout", command=self.logout, font=btn_font)
         edit_info_btn = tk.Button(self.post_login_frame, text="Edit", command=self.edit_info, font=btn_font)
         dereg_btn = tk.Button(self.post_login_frame, text="Deregister", command=self.deregister, font=btn_font)
-        name_label = tk.Label(self.post_login_frame, text="Name :     ", font=("Helvetica", 10))
+        name_label = tk.Label(self.post_login_frame, text="Name :", font=("Helvetica", 10))
         user_id_label = tk.Label(self.post_login_frame, text="User ID :", font=("Helvetica", 10))
         age_id_label = tk.Label(self.post_login_frame, text="Age :", font=("Helvetica", 10))
         gender_label = tk.Label(self.post_login_frame, text="Gender :", font=("Helvetica", 10))
@@ -529,11 +606,17 @@ class MyApp:
     def deregister(self):
         if isinstance(self.User, Teacher):
             teachers_list.remove(self.User)
+            new_teacher_data = [teacher.to_dict() for teacher in teachers_list]
+            update_json_file("teacher_data.json", new_teacher_data)
         elif isinstance(self.User, PostgraduateStudent):
             PG_list.remove(self.User)
+            new_PG_data = [PG.to_dict() for PG in PG_list]
+            update_json_file("PG_Students_data.json", new_PG_data)
         elif isinstance(self.User, UndergraduateStudent):
             UG_list.remove(self.User)
-        
+            new_UG_data = [UG.to_dict() for UG in UG_list]
+            update_json_file("UG_Students_data.json", new_UG_data)
+            
         self.deregisteredAlert()
         
         self.logout()
@@ -584,8 +667,6 @@ class MyApp:
             new_roll_entry.grid(row=4, column=1, sticky="w", padx=(0, 20))
             new_dept_label.grid(row=5, column=0, sticky="e", padx=(20, 0))
             new_dept_entry.grid(row=5, column=1, sticky="w", padx=(0, 20))
-
-            
 
 
         
