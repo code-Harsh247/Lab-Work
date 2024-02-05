@@ -1,0 +1,8 @@
+g++ -c DataVector.cpp -o DataVector.o   
+g++ -c VectorDataset.cpp -o VectorDataset.o
+g++ -c nearestneighbour.cpp -o nearestneighbour.o
+g++ VectorDataset.o DataVector.o nearestneighbour.o -o nearestneighbour
+nearestneighbour.exe
+
+TO DELETE THE OBJECT FILES AND EXECUTABLE FILES
+del *.o *.exe 
